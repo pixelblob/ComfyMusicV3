@@ -1,36 +1,41 @@
-const { EndBehaviorType, createAudioPlayer, joinVoiceChannel, createAudioResource } = require('@discordjs/voice');
-const { Client, Events, GatewayIntentBits } = require('discord.js');
+const { Client, Events, GatewayIntentBits, Collection, AttachmentBuilder } = require('discord.js');
+const fs = require("fs")
 const { token } = require('./config.json');
-const ytdl = require("ytdl-core-discord");
 
-const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildVoiceStates] });
+const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildVoiceStates, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent] });
 
+client.commands = new Collection();
 
 client.on("ready", async () => {
     console.log("Ready")
-    var voiceChannel = client.guilds.cache.get("716871605749416020").members.cache.get("290444481743028224").voice.channel
 
-    const connection = joinVoiceChannel({
-        channelId: voiceChannel.id,
-        guildId: voiceChannel.guild.id,
-        adapterCreator: voiceChannel.guild.voiceAdapterCreator,
-        selfDeaf: false,
-    });
+    //Register's all of the bots "/" commands.
+    const commandFiles = fs.readdirSync('commands').filter(file => file.endsWith('.js'));
+    for (const file of commandFiles) {
+        const command = require(`./commands/${file}`);
+        client.commands.set(command.data.name, command);
+    }
+    console.log(`Found ${client.commands.size} Commands: [${client.commands.map(e => e.data.name).join(", ")}]`)
 
-    const resource = createAudioResource(await ytdl("https://www.youtube.com/watch?v=O1g_DIaVQ2o&t=580s", {highWaterMark: 1}), { type: 'opus' });
-    const player = createAudioPlayer();
+})
 
-    connection.subscribe(player);
+client.on("interactionCreate", async interaction=>{
+    //Handles the execution of the "/" commands.
+    if (interaction.isCommand()) {
+        const command = client.commands.get(interaction.commandName);
+    if (!command) return;
 
-    player.play(resource);
-
-    player.on("debug", msg=>{
-        console.log(msg)
-    })
-
-    player.on('error', error => {
+    try {
+        await command.execute(interaction);
+    } catch (error) {
         console.error(error);
-    });
+        
+        var attachment = new AttachmentBuilder(Buffer.from(error.stack, 'utf-8'), {name:'error.txt'})
+        await interaction.channel.send({ content: 'There was an error while executing this command!', ephemeral: false, files: [attachment]}).catch(e => {
+            interaction.editReply({ content: 'There was an error while executing this command!', ephemeral: false, files: [attachment]})
+        })
+    }
+    }
 })
 
 
