@@ -1,0 +1,11 @@
+{
+    "emeraldwalk.runonsave": {
+        "commands": [
+            {
+                "match": "./commands/*",
+                "isAsync": true,
+                "cmd": "curl -X POST 127.0.0.1:3000/reload"
+            }
+        ]
+    }
+}

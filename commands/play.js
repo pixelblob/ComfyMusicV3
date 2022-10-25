@@ -34,6 +34,7 @@ module.exports = {
 
         player.play(resource)
         connection.subscribe(player)
+        interaction.reply("Playing!")
     }
 
 }
