@@ -1,6 +1,4 @@
 const { Client, Events, GatewayIntentBits, Collection, AttachmentBuilder } = require('discord.js');
-const { REST } = require('@discordjs/rest');
-const { Routes } = require('discord-api-types/v9');
 const { exec } = require('child_process');
 const { token, clientId, guildId } = require('./config.json');
 const express = require('express')
@@ -12,6 +10,12 @@ const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBit
 
 client.commands = new Collection();
 client.events = new Collection();
+client.routes = new Collection();
+
+const { CreateRoutes } = require("./util/fsRoute.js")
+
+//CreateRoutes()
+
 
 const eventFiles = fs.readdirSync('./events').filter(file => file.endsWith('.js'));
 
@@ -29,7 +33,7 @@ for (const file of eventFiles) {
 }
 console.log(`Found ${client.events.size} Events: [${client.events.map(e => e.name).join(", ")}]`)
 
-app.post('/reload', (req, res) => {
+/* app.post('/reload', (req, res) => {
     var oldcommands = new Collection();
     client.commands.forEach(command => {
         oldcommands.set(command.data.name, command);
@@ -50,7 +54,6 @@ app.post('/reload', (req, res) => {
             console.log("NEW COMMAND: " + command.data.name)
             commandsChanged = true;
         }
-
     }
 
     oldcommands.forEach(command => {
@@ -69,12 +72,10 @@ app.post('/reload', (req, res) => {
         console.log("---DEPLOY---")
         deployGuildCommands()
     }
-
     res.end()
+}) */
 
-})
-
-app.post('/events/reload', (req, res) => {
+/* app.post('/events/reload', (req, res) => {
     client.events.forEach(event => {
         client.off(event.name, event.listener)
         delete require.cache[require.resolve(`./events/${event.name}.js`)];
@@ -95,39 +96,38 @@ app.post('/events/reload', (req, res) => {
             var listener = client.on(event.name, event.listener);
             client.events.set(event.name, event);
         }
+        console.log("loaded: " + event.name)
     }
-
     res.end()
-
-})
-
-
-function deployGuildCommands() {
-    const rest = new REST({ version: '10' }).setToken(token);
-
-
-    const commands = [];
-    const commandFiles = fs.readdirSync('./commands').filter(file => file.endsWith('.js'));
-
-    for (const file of commandFiles) {
-        console.log(file)
-        const command = require(`./commands/${file}`);
-        commands.push(command.data.toJSON());
-
-    }
-
-    rest.put(Routes.applicationGuildCommands(clientId, guildId), { body: commands })
-        .then(() => console.log('Successfully registered application commands.'))
-        .catch(console.error);
-}
+}) */
 
 
 client.login(token)
 
 app.listen(port, () => {
     console.log(`Example app listening on port ${port}`)
+
+    const { CreatePXRoutes } = require("./util/pxRoute.js")
+    CreatePXRoutes()
+
 })
 
+function recurseReadDir(dir) {
+    var files = []
+    var routeFiles = fs.readdirSync(dir);
+    for (const routeFile of routeFiles) {
+        var stat = fs.statSync(dir + "/" + routeFile);
+        if (stat && stat.isDirectory()) {
+            files = files.concat(recurseReadDir(dir + "/" + routeFile));
+        } else {
+            files.push(dir + "/" + routeFile);
+        }
+    }
+    return files
+}
+
 module.exports = {
-    client
+    client,
+    recurseReadDir,
+    app
 }

@@ -7,6 +7,11 @@
                 "cmd": "curl -X POST 127.0.0.1:3000/reload"
             },
             {
+                "match": "./routes/*",
+                "isAsync": true,
+                "cmd": "curl -X POST 127.0.0.1:3000/routes/reload"
+            },
+            {
                 "match": "./events/*",
                 "isAsync": true,
                 "cmd": "curl -X POST 127.0.0.1:3000/events/reload"
