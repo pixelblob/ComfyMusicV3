@@ -5,7 +5,7 @@ const fs = require("fs")
 module.exports = {
     request: "post",
     execute(req, res) {
-        const { client } = require("../index.js")
+        const { client, token } = require("../index.js")
         var oldcommands = new Collection();
         client.commands.forEach(command => {
             oldcommands.set(command.data.name, command);
@@ -15,10 +15,12 @@ module.exports = {
         });
     
         var commandsChanged = false;
-    
-        const commandFiles = fs.readdirSync('commands').filter(file => file.endsWith('.js'));
+
+        setTimeout(() => {
+            const commandFiles = fs.readdirSync('commands').filter(file => file.endsWith('.js'));
         for (const file of commandFiles) {
             const command = require(`../commands/${file}`);
+            console.log(command)
             console.log("loaded: " + command.data.name)
             client.commands.set(command.data.name, command);
     
@@ -42,21 +44,24 @@ module.exports = {
     
         if (commandsChanged) {
             console.log("---DEPLOY---")
-            deployGuildCommands()
+            deployGuildCommands(token, client.user.id, "716871605749416020", client.commands)
         }
         res.end()  
+        }, 50);
+    
+        
     },
 };
 
-function deployGuildCommands() {
+function deployGuildCommands(token, clientId, guildId, commands) {
     const rest = new REST({ version: '10' }).setToken(token);
 
-    const commands = [];
+    commands = [];
     const commandFiles = fs.readdirSync('./commands').filter(file => file.endsWith('.js'));
 
     for (const file of commandFiles) {
         console.log(file)
-        const command = require(`./commands/${file}`);
+        const command = require(`../commands/${file}`);
         commands.push(command.data.toJSON());
     }
 

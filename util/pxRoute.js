@@ -1,7 +1,11 @@
-module.exports = { CreatePXRoutes }
+module.exports = { CreatePXRoutes, CreateCommandRoutes }
 
 const fs = require("fs")
 const { app, client, routes } = require("../index.js")
+const express = require('express')
+
+app.use(express.json());
+const { InteractionResponse } = require("discord.js")
 
 function recurseReadDir(dir) {
     var files = []
@@ -17,36 +21,85 @@ function recurseReadDir(dir) {
     return files
 }
 
+app.use(express.static('public'))
+
+function CreateCommandRoutes() {
+    console.log("CreateCommandRoutes")
+    var files = recurseReadDir('./commands')
+    files.forEach(file => {
+        if (file.endsWith(".js")) {
+            file = "." + file
+            console.log("FILE: " + file)
+            const route = requireUncached(file);
+            console.log(route)
+            const path = file.replace("../commands", "").replace(".js", "")
+            route.path = path
+            client.routes.set(path, route);
+
+            app.post("/commands"+path, (req, res)=>{
+
+                console.log(req.body)
+
+                var interaction = {}
+                interaction.options={}
+                interaction.options.getString = function(s) {
+                    return req.body.options[s]
+                }
+
+                interaction.reply=function(m){
+                    return res.end(m)
+                }
+
+                interaction.member = client.guilds.cache.get(req.body.guildId).members.cache.get(req.body.userId)
+                interaction.guild = client.guilds.cache.get(req.body.guildId)
+
+                route.execute(interaction).catch(error=>{
+                    console.log(error)
+                res.end(error.toString())
+                })
+            })
+        }
+    })
+    app.get("/commands", (req, res)=>{
+        res.json(client.commands.map(c=> c.data.name))
+    })
+}
+
 //handles routes
 function CreatePXRoutes() {
     var files = recurseReadDir('./routes')
     files.forEach(file => {
         if (file.endsWith(".js")) {
-            file="."+file
-            console.log(file)
-            const route = require(file);
+            file = "." + file
+            console.log("FILE: " + file)
+            const route = requireUncached(file);
+            console.log(route)
             const path = file.replace("../routes", "").replace(".js", "")
             route.path = path
             client.routes.set(path, route);
             if (route.request == "get") {
-                console.log(path)
+                console.log("GET REQ: " + path)
                 app.get(path, (...args) => route.execute(...args))
             } else if (route.request == "put") {
-                console.log(path)
                 app.put(path, (...args) => route.execute(...args))
             } else if (route.request == "post") {
-                console.log(path)
                 app.post(path, (...args) => route.execute(...args))
             } else if (route.request == "delete") {
-                console.log(path)
                 app.delete(path, (...args) => route.execute(...args))
             } else if (route.request == "patch") {
-                console.log(path)
                 app.patch(path, (...args) => route.execute(...args))
             } else if (route.request == "options") {
-                console.log(path)
                 app.options(path, (...args) => route.execute(...args))
             }
         }
     })
+    console.log(`Found ${client.routes.size} Routes: [${client.routes.map(e => e.path).join(", ")}]`)
+
+    //console.log(app._router.stack)
+
+}
+
+function requireUncached(module) {
+    delete require.cache[require.resolve(module)];
+    return require(module);
 }

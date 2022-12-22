@@ -12,7 +12,7 @@ module.exports = {
             //console.log(`./events/${event.name}.js`)
             var thing = require.resolve(`../../events/${event.name}.js`)
             //console.log("DEL")
-            delete require.cache[thing];
+            delete require.cache[event];
             client.events.delete(event.name);
             console.log("unloaded: " + event.name)
         });

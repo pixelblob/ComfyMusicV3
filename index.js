@@ -3,8 +3,13 @@ const { exec } = require('child_process');
 const { token, clientId, guildId } = require('./config.json');
 const express = require('express')
 const fs = require("fs")
+const axios = require("axios")
 const app = express()
 const port = 3000
+const tokens = require('./tokens.json')
+const discordTokens = require('./discordTokens.json')
+const sessions = require('./sessions.json')
+var cookieParser = require('cookie-parser')
 
 const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildVoiceStates, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent] });
 
@@ -12,10 +17,7 @@ client.commands = new Collection();
 client.events = new Collection();
 client.routes = new Collection();
 
-const { CreateRoutes } = require("./util/fsRoute.js")
-
-//CreateRoutes()
-
+app.use(cookieParser());
 
 const eventFiles = fs.readdirSync('./events').filter(file => file.endsWith('.js'));
 
@@ -33,83 +35,49 @@ for (const file of eventFiles) {
 }
 console.log(`Found ${client.events.size} Events: [${client.events.map(e => e.name).join(", ")}]`)
 
-/* app.post('/reload', (req, res) => {
-    var oldcommands = new Collection();
-    client.commands.forEach(command => {
-        oldcommands.set(command.data.name, command);
-        delete require.cache[require.resolve(`./commands/${command.data.name}.js`)];
-        console.log("unloaded: " + command.data.name)
-        client.commands.delete(command.data.name);
-    });
+var watchDirectorys = ["./events", "./commands", "./routes"]
 
-    var commandsChanged = false;
+watchDirectorys.forEach(directory => {
+    watchDirectorys = watchDirectorys.concat(recurseGetDirs(directory))
+})
+watchDirectorys.forEach(directory => {
+    var fsTimeout
+    fs.watch(directory, (eventType, filename) => {
+        if (!fsTimeout) {
 
-    const commandFiles = fs.readdirSync('commands').filter(file => file.endsWith('.js'));
-    for (const file of commandFiles) {
-        const command = require(`./commands/${file}`);
-        console.log("loaded: " + command.data.name)
-        client.commands.set(command.data.name, command);
+            var path = directory + "/" + filename
 
-        if (!oldcommands.has(command.data.name)) {
-            console.log("NEW COMMAND: " + command.data.name)
-            commandsChanged = true;
-        }
-    }
-
-    oldcommands.forEach(command => {
-        if (!client.commands.has(command.data.name)) {
-            console.log("DELETED COMMAND: " + command.data.name)
-            commandsChanged = true;
-        } else {
-            if (JSON.stringify(command.data) != JSON.stringify(client.commands.get(command.data.name).data)) {
-                console.log("DATA CHANGED: " + command.data.name)
-                commandsChanged = true;
+            if (path.startsWith("./events")) {
+                axios.post("http://127.0.0.1:3000/events/reload").catch(e=>{
+                    console.log("Failed to reload: "+path)
+                })
+            } else if (path.startsWith("./commands")) {
+                axios.post("http://127.0.0.1:3000/reload").catch(e=>{
+                    console.log("Failed to reload: "+path)
+                })
+            } else if (path.startsWith("./routes")) {
+                axios.post("http://127.0.0.1:3000/routes/reload").catch(e=>{
+                    console.log("Failed to reload: "+path)
+                })
             }
+
+            console.log("Update: "+path)
+
+            fsTimeout = setTimeout(function () { fsTimeout = null }, 1000)
         }
     })
+})
 
-    if (commandsChanged) {
-        console.log("---DEPLOY---")
-        deployGuildCommands()
-    }
-    res.end()
-}) */
-
-/* app.post('/events/reload', (req, res) => {
-    client.events.forEach(event => {
-        client.off(event.name, event.listener)
-        delete require.cache[require.resolve(`./events/${event.name}.js`)];
-        client.events.delete(event.name);
-        console.log("unloaded: " + event.name)
-    });
-
-    const eventFiles = fs.readdirSync('./events').filter(file => file.endsWith('.js'));
-
-    for (const file of eventFiles) {
-        const event = require(`./events/${file}`);
-        if (event.once) {
-            event.listener = (...args) => event.execute(...args)
-            var listener = client.once(event.name, event.listener);
-            client.events.set(event.name, event);
-        } else {
-            event.listener = (...args) => event.execute(...args)
-            var listener = client.on(event.name, event.listener);
-            client.events.set(event.name, event);
-        }
-        console.log("loaded: " + event.name)
-    }
-    res.end()
-}) */
-
+console.log(watchDirectorys)
 
 client.login(token)
 
 app.listen(port, () => {
     console.log(`Example app listening on port ${port}`)
 
-    const { CreatePXRoutes } = require("./util/pxRoute.js")
+    const { CreatePXRoutes, CreateCommandRoutes } = require("./util/pxRoute.js")
     CreatePXRoutes()
-
+    CreateCommandRoutes()
 })
 
 function recurseReadDir(dir) {
@@ -126,8 +94,26 @@ function recurseReadDir(dir) {
     return files
 }
 
+function recurseGetDirs(dir) {
+    var directorys = []
+    var routeFiles = fs.readdirSync(dir);
+    for (const routeFile of routeFiles) {
+        var stat = fs.statSync(dir + "/" + routeFile);
+        if (stat && stat.isDirectory()) {
+            console.log(dir + "/" + routeFile)
+            directorys.push(dir + "/" + routeFile)
+            directorys = directorys.concat(recurseGetDirs(dir + "/" + routeFile));
+        }
+    }
+    return directorys
+}
+
 module.exports = {
     client,
     recurseReadDir,
-    app
+    app,
+    token,
+    tokens,
+    discordTokens,
+    sessions
 }

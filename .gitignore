@@ -1,2 +1,6 @@
 config.json
 node_modules
+discordTokens.json
+sessions.json
+tokens.json
+.vscode/settings.json

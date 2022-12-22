@@ -8,19 +8,24 @@ module.exports = {
         const { app, client } = require("../../index.js")
         console.log("Reload Routes!")
         client.routes.forEach(route => {
-            console.log(route.path)
             var oldroute = app["_router"].stack.findIndex(r=> r.route?.path == route.path)
-            console.log(app["_router"].stack)
             if (oldroute >= 0) {
-                console.log(oldroute)
                 app["_router"].stack.splice(oldroute, 1)
                 client.routes.delete(route.path)
+                try {
+                    var thing = require.resolve(`..${route.path}.js`)
+                    delete require.cache[thing];
+                } catch (error) {
+                    console.log("Failed to get: "+route.path)
+                }
             }
         });
 
-        const { CreatePXRoutes } = require("../../util/pxRoute.js")
+        setTimeout(() => {
+            const { CreatePXRoutes } = require("../../util/pxRoute.js")
         CreatePXRoutes()
 
         res.end()
+        }, 50);
     },
 };

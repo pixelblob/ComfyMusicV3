@@ -3,6 +3,6 @@ module.exports = {
     name: 'messageCreate',
     once: false,
     execute(msg) {
-        console.log("MESSAGE: "+msg.content)
+        console.log("Someone sent smthn: "+msg.content)
     },
 };
