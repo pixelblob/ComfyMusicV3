@@ -1,4 +1,5 @@
 const fs = require("fs")
+
 module.exports = {
     name: 'ready',
     once: true,
@@ -14,5 +15,11 @@ module.exports = {
         console.log(`Found ${client.commands.size} Commands: [${client.commands.map(e => e.data.name).join(", ")}]`)
 
 
+        var { queues } = require("../index")
+
+        client.guilds.cache.forEach(guild => {
+            console.log(guild.name)
+            queues[guild.id] = { current: null, queue: [], position: null, queueSize: 0 }
+        })
     },
 };

@@ -17,6 +17,8 @@ module.exports = {
         var input = interaction.options.getString('input')
         console.log(input)
 
+        const { addToQueue, queues } = require("../index")
+
 
         if (!interaction.member.voice?.channel) return interaction.channel.send('Connect to a Voice Channel')
 
@@ -30,7 +32,29 @@ module.exports = {
 
         var seconds;
 
+        var details
+
         if (input.match(youtubeRegex)) {
+            details = await play.video_basic_info(input)
+        } else {
+            details = await play.video_basic_info((await ytsr.search(input)).videos[0].link);
+        }
+
+        details = details.video_details
+
+        console.log(details)
+
+        addToQueue(details, interaction.guild.id)
+
+        var serverQueue = queues[interaction.guild.id]
+        
+        if (serverQueue.queue.length > 1) {
+            interaction.reply(`Adding to the queue! (${serverQueue.queue.length})`)
+        } else {
+            interaction.reply("Playing!")
+        }
+
+        /* if (input.match(youtubeRegex)) {
             const params = new URLSearchParams(input.match(youtubeRegex)[6])
             console.log(input.match(youtubeRegex)[5])
             var options = {}
@@ -54,7 +78,7 @@ module.exports = {
 
         player.play(resource)
         connection.subscribe(player)
-        interaction.reply("Playing!")
+        interaction.reply("Playing!") */
     }
 
 }

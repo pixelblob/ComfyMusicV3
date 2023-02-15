@@ -6,16 +6,21 @@ module.exports = {
     request: "get",
     /** @type {import("express").RequestHandler} */
     execute(req, res) {
-        var { tokens } = require("../index.js")
+        var { tokens, sessions, discordTokens } = require("../index.js")
         var code = req.query.code || null;
         var bodyFormData = new URLSearchParams();
         bodyFormData.append('code', req.query.code);
-        bodyFormData.append('redirect_uri', 'http://pixelboop.net:3000/callback');
+        bodyFormData.append('redirect_uri', 'https://v3.pixelboop.net/api/callback');
         bodyFormData.append('grant_type', 'authorization_code');
 
         console.log(sp_id, sp_secret)
 
         console.log("HERE")
+
+        console.log(req.cookies)
+
+        var session = sessions[req.cookies.sessionId]
+        if (session) {
 
         axios.post("https://accounts.spotify.com/api/token", bodyFormData, {
             headers: {
@@ -40,6 +45,15 @@ module.exports = {
                  
                     console.log("JSON file has been saved.");
                 });
+                discordTokens[session.userId].spotifyId = req2.data.id
+                    fs.writeFile("./discordTokens.json", JSON.stringify(discordTokens, null, 4), 'utf8', function (err) {
+                        if (err) {
+                            console.log("An error occured while writing JSON Object to File.");
+                            return console.log(err);
+                        }
+
+                        console.log("JSON file has been saved.");
+                    });
             }).catch(e => {
                 console.log(e)
             })
@@ -47,5 +61,7 @@ module.exports = {
         }).catch(e => {
             console.log(e)
         })
+
+    }
     }
 };

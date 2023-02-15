@@ -18,10 +18,10 @@ module.exports = {
         } catch (error) {
             console.error(error);
             
-            var attachment = new MessageAttachment(Buffer.from(error.stack, 'utf-8'), 'error.txt')
-            await interaction.channel.send({ content: 'There was an error while executing this command!', ephemeral: false, files: [attachment]}).catch(e => {
+            //var attachment = new MessageAttachment(Buffer.from(error.stack, 'utf-8'), 'error.txt')
+            /* await interaction.channel.send({ content: 'There was an error while executing this command!', ephemeral: false, files: [attachment]}).catch(e => {
                 interaction.editReply({ content: 'There was an error while executing this command!', ephemeral: false, files: [attachment]})
-            })
+            }) */
         }
         }
     },

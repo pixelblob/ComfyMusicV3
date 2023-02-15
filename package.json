@@ -8,11 +8,17 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
+    "@discordjs/opus": "^0.8.0",
     "@discordjs/voice": "^0.13.0",
     "discord.js": "^14.6.0",
+    "fluent-ffmpeg-multistream": "^1.0.0",
     "libsodium-wrappers": "^0.7.10",
     "node-osc": "^8.0.6",
+    "play-dl": "^1.9.6",
+    "prism-media": "^1.3.4",
     "scrape-youtube": "^2.3.2",
+    "socket.io": "^4.5.4",
+    "vosk": "^0.3.39",
     "ytdl-core-discord": "^1.3.1"
   },
   "devDependencies": {

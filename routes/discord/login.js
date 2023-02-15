@@ -9,7 +9,7 @@ module.exports = {
         res.redirect('https://discord.com/api/oauth2/authorize?' +
             querystring.stringify({
                 client_id: clientId,
-                redirect_uri: 'http://pixelboop.net:3000/discord/callback',
+                redirect_uri: 'https://v3.pixelboop.net/api/discord/callback',
                 response_type: 'code',
                 scope: 'identify email connections guilds'
             }));

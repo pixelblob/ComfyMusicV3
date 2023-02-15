@@ -1,6 +1,7 @@
 module.exports = {
     request: "get",
     execute(req, res) {
-        res.end("Wooohoodasdadao it works?????")
+        const { addToQueue, queues } = require("../index")
+        res.json(queues)
     },
 };

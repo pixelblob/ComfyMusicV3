@@ -10,8 +10,8 @@ module.exports = {
             querystring.stringify({
                 response_type: 'code',
                 client_id: sp_id,
-                scope: 'user-read-private user-read-email',
-                redirect_uri: 'http://pixelboop.net:3000/callback',
+                scope: 'user-read-private user-read-email user-read-playback-state user-modify-playback-state user-read-currently-playing app-remote-control streaming',
+                redirect_uri: 'https://v3.pixelboop.net/api/callback',
             }));
     },
 };
