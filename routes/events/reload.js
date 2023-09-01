@@ -18,22 +18,37 @@ module.exports = {
         });
 
         //console.log("here1")
-    
-        const eventFiles = fs.readdirSync('./events').filter(file => file.endsWith('.js'));
-    
-        for (const file of eventFiles) {
-            const event = require(`../../events/${file}`);
-            if (event.once) {
-                event.listener = (...args) => event.execute(...args)
-                var listener = client.once(event.name, event.listener);
-                client.events.set(event.name, event);
-            } else {
-                event.listener = (...args) => event.execute(...args)
-                var listener = client.on(event.name, event.listener);
-                client.events.set(event.name, event);
-            }
-            console.log("loaded: " + event.name)
+
+        function requireUncached(module) {
+            delete require.cache[require.resolve(module)];
+            return require(module);
         }
-        res.end()
+
+        setTimeout(() => {
+            const eventFiles = fs.readdirSync('./events').filter(file => file.endsWith('.js'));
+
+            for (const file of eventFiles) {
+                //console.log("REQUIRE UNCACHED")
+
+                try {
+                    const event = requireUncached(`../../events/${file}`);
+                    if (event.once) {
+                        event.listener = (...args) => event.execute(...args)
+                        var listener = client.once(event.name, event.listener);
+                        client.events.set(event.name, event);
+                    } else {
+                        event.listener = (...args) => event.execute(...args)
+                        var listener = client.on(event.name, event.listener);
+                        client.events.set(event.name, event);
+                    }
+                    //console.log("loaded: " + event.name)
+                } catch (error) {
+                    console.log(error)
+                }
+
+
+            }
+            res.end()
+        }, 50);
     },
 };

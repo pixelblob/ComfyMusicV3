@@ -10,10 +10,18 @@ module.exports = {
         const commandFiles = fs.readdirSync('commands').filter(file => file.endsWith('.js'));
         for (const file of commandFiles) {
             const command = require(`../commands/${file}`);
+            if (!command.data) continue;
             client.commands.set(command.data.name, command);
         }
         console.log(`Found ${client.commands.size} Commands: [${client.commands.map(e => e.data.name).join(", ")}]`)
 
+        //Register all of the bots buttons :>
+        const buttonFiles = fs.readdirSync('buttons').filter(file => file.endsWith('.js'));
+        for (const file of buttonFiles) {
+            const button = require(`../buttons/${file}`);
+            client.buttons.set(button.name, button);
+        }
+        console.log(`Found ${client.buttons.size} Buttons: [${client.buttons.map(e=> e.name).join(", ")}]`)
 
         var { queues } = require("../index")
 

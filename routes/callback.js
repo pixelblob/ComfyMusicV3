@@ -5,8 +5,8 @@ const fs = require("fs")
 module.exports = {
     request: "get",
     /** @type {import("express").RequestHandler} */
-    execute(req, res) {
-        var { tokens, sessions, discordTokens } = require("../index.js")
+    async execute(req, res) {
+        var { tokens, sessions, discordTokens, getSession, createSpotifyUser } = require("../index.js")
         var code = req.query.code || null;
         var bodyFormData = new URLSearchParams();
         bodyFormData.append('code', req.query.code);
@@ -19,49 +19,35 @@ module.exports = {
 
         console.log(req.cookies)
 
-        var session = sessions[req.cookies.sessionId]
+        var session = await getSession(req.cookies.sessionId)
         if (session) {
 
-        axios.post("https://accounts.spotify.com/api/token", bodyFormData, {
-            headers: {
-                'Authorization': 'Basic ' + (new Buffer(sp_id + ':' + sp_secret).toString('base64'))
-            }
-        }).then(req=>{
-            console.log("WOOOO")
-            console.log(req.data)
-
-            axios.get("https://api.spotify.com/v1/me", {
-                headers: {
-                    'Authorization': 'Bearer ' + req.data.access_token
-                }
-            }).then(req2=>{
-                console.log(req2.data.id)
-                tokens[req2.data.id] = { access_token: req.data.access_token, refresh_token: req.data.refresh_token, date: new Date() }
-                fs.writeFile("./tokens.json", JSON.stringify(tokens, null, 4), 'utf8', function (err) {
-                    if (err) {
-                        console.log("An error occured while writing JSON Object to File.");
-                        return console.log(err);
+            try {
+                let spotifyOauthData = (await axios.post("https://accounts.spotify.com/api/token", bodyFormData, {
+                    headers: {
+                        'Authorization': 'Basic ' + (new Buffer(sp_id + ':' + sp_secret).toString('base64'))
                     }
-                 
-                    console.log("JSON file has been saved.");
-                });
-                discordTokens[session.userId].spotifyId = req2.data.id
-                    fs.writeFile("./discordTokens.json", JSON.stringify(discordTokens, null, 4), 'utf8', function (err) {
-                        if (err) {
-                            console.log("An error occured while writing JSON Object to File.");
-                            return console.log(err);
-                        }
+                })).data
+                console.log("WOOOO")
+                console.log(spotifyOauthData)
 
-                        console.log("JSON file has been saved.");
-                    });
-            }).catch(e => {
-                console.log(e)
-            })
+                let spotifyUserData = (await axios.get("https://api.spotify.com/v1/me", {
+                    headers: {
+                        'Authorization': 'Bearer ' + spotifyOauthData.access_token
+                    }
+                })).data
+                console.log(spotifyUserData.id)
+                //access_token: req.data.access_token, refresh_token: req.data.refresh_token, date: new Date()
+                createSpotifyUser({ spotifyId: spotifyUserData.id, discordId: session.discordId, accessToken: spotifyOauthData.access_token, refreshToken: spotifyOauthData.refresh_token, date: new Date() })
 
-        }).catch(e => {
-            console.log(e)
-        })
+                res.redirect("/")
+            } catch (error) {
+                console.log(error)
+                res.redirect("/api/login")
+            }
 
-    }
+        } else {
+            res.redirect("/api/discord/login")
+        }
     }
 };

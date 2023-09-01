@@ -15,6 +15,11 @@
                 "match": "./events/*",
                 "isAsync": true,
                 "cmd": "curl -X POST 127.0.0.1:3000/events/reload"
+            },
+            {
+                "match": "./buttons/*",
+                "isAsync": true,
+                "cmd": "curl -X POST 127.0.0.1:3000/buttons/reload"
             }
         ]
     },

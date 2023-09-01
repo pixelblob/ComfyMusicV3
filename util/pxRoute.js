@@ -50,6 +50,10 @@ function CreateCommandRoutes() {
                     return res.end(m)
                 }
 
+                interaction.update=function(m){
+
+                }
+
                 interaction.member = client.guilds.cache.get(req.body.guildId).members.cache.get(req.body.userId)
                 interaction.guild = client.guilds.cache.get(req.body.guildId)
 
@@ -77,7 +81,8 @@ function CreatePXRoutes() {
             const path = file.replace("../routes", "").replace(".js", "")
             route.path = path
             client.routes.set(path, route);
-            if (route.request == "get") {
+            try {
+                if (route.request == "get") {
                 console.log("GET REQ: " + path)
                 app.get(path, (...args) => route.execute(...args))
             } else if (route.request == "put") {
@@ -91,6 +96,10 @@ function CreatePXRoutes() {
             } else if (route.request == "options") {
                 app.options(path, (...args) => route.execute(...args))
             }
+            } catch (error) {
+                console.log(error)
+            }
+            
         }
     })
     console.log(`Found ${client.routes.size} Routes: [${client.routes.map(e => e.path).join(", ")}]`)

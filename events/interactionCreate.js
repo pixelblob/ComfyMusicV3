@@ -1,4 +1,4 @@
-const {MessageAttachment, Interaction} = require("discord.js")
+const {AttachmentBuilder, Interaction} = require("discord.js")
 
 
 module.exports = {
@@ -7,6 +7,8 @@ module.exports = {
     async execute(interaction) {
 
         const { client } = require("../index.js")
+
+        console.log("INTERACTION HAS BEEN DELT")
 
         //Handles the execution of the "/" commands.
         if (interaction.isCommand()) {
@@ -24,5 +26,25 @@ module.exports = {
             }) */
         }
         }
+
+        //Handles the execution of buttons.
+        if (interaction.isButton()) {
+            const button = client.buttons.get(interaction.customId);
+            //console.log(client.buttons)
+            if (!button) return;
+    
+            try {
+                await button.execute(interaction);
+            } catch (error) {
+                console.error(error);
+                
+                var attachment = new AttachmentBuilder(Buffer.from(error.stack, 'utf-8'), {name: 'error.txt'})
+                await interaction.channel.send({ content: 'There was an error while executing this button!', ephemeral: false, files: [attachment]}).catch(e => {
+                    interaction.editReply({ content: 'There was an error while executing this button!', ephemeral: false, files: [attachment]})
+                })
+            }
+        }
+
+
     },
 };

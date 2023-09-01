@@ -6,3 +6,7 @@ tokens.json
 .vscode/settings.json
 *model*
 .data/youtube.data
+tokenStorage.json
+songCache
+central.db
+links.db

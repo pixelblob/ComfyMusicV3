@@ -5,6 +5,8 @@ const prism = require("prism-media")
 const play = require('play-dl')
 const ytsr = require('scrape-youtube');
 const vosk = require('vosk')
+const fs = require('fs')
+var wav = require("wav");
 
 const SAMPLE_RATE = 48000
 
@@ -30,7 +32,9 @@ module.exports = {
 
         receiver.speaking.on('start', (userId) => {
             if (!speaking[userId]) speaking[userId] = {}
+            if (!speaking[userId].bufferData) speaking[userId].bufferData = []
             var voskUser = speaking[userId]
+            var bufferData = speaking[userId].bufferData
             if (voskUser.speaking == true) return
             //console.log(speaking)
             voskUser.speaking = true
@@ -49,10 +53,16 @@ module.exports = {
                     duration: 500,
                 },
             });
+
+            //const filename = `/home/pixel/discordbot/ComfyMusicV3/recordings/${client.users.cache.get(userId).username}.ogg`;
+
+            //const out = fs.createWriteStream(filename);
+            //const bufferData = [];
             opusStream.pipe(
                 new prism.opus.Decoder({ rate: 24000, channels: 2, frameSize: 960 })
             )
                 .on("data", (data) => {
+                    /* bufferData.push(data); */
                     if (rec.acceptWaveform(data))
                         console.log(rec.result());
                     else {
@@ -83,6 +93,13 @@ module.exports = {
                     } else if (final.includes("fuck off")) {
                         connection.destroy()
                     }
+
+                    /* const outputFile = new wav.FileWriter(filename, {
+                        sampleRate: 24000,
+                        channels: 2,
+                    });
+                    outputFile.write(Buffer.concat(bufferData));
+                    outputFile.end(); */
 
                     if (final) console.log("-----------end-----------")
                     speaking[userId].speaking = false
