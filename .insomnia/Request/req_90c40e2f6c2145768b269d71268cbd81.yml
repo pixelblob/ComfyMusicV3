@@ -1,17 +1,17 @@
-_id: req_92af9d7f51e243d087fcb946c52acebd
+_id: req_90c40e2f6c2145768b269d71268cbd81
 type: Request
 parentId: wrk_1ba57aa66cc94b6d9a05926afcb171b6
-modified: 1693586753435
-created: 1693585938129
-url: https://v3.pixelboop.net/api/test
-name: Get Queue
+modified: 1693586705439
+created: 1693586537728
+url: https://v3.pixelboop.net/api/spotify/lyrics
+name: Lyrics
 description: ""
 method: GET
 body: {}
 parameters: []
 headers: []
 authentication: {}
-metaSortKey: -1693585938129
+metaSortKey: -1693586537728
 isPrivate: false
 settingStoreCookies: true
 settingSendCookies: true
